@@ -7,7 +7,7 @@
  *
  * Similar functions for working with MathML nodes exist in mathMLTree.js.
  */
-
+var cjkRegex = require("./unicodeRegexes").cjkRegex;
 var utils = require("./utils");
 
 /**
@@ -169,6 +169,14 @@ documentFragment.prototype.toMarkup = function() {
     return markup;
 };
 
+var iCombinations = {
+    'î': '\u0131\u0302',
+    'ï': '\u0131\u0308',
+    'í': '\u0131\u0301',
+    // 'ī': '\u0131\u0304', // enable when we add Extended Latin
+    'ì': '\u0131\u0300'
+};
+
 /**
  * A symbol node contains information about a single symbol. It either renders
  * to a single text node, or a span with a single text node in it, depending on
@@ -183,6 +191,16 @@ function symbolNode(value, height, depth, italic, skew, classes, style) {
     this.classes = classes || [];
     this.style = style || {};
     this.maxFontSize = 0;
+
+    if (cjkRegex.test(value)) {
+        // Use a fallback font 'serif' for CJK glyphs because some browsers/OSs
+        // default to a sans-serif font for these glyphs.
+        this.classes.push('fallback');
+    }
+
+    if (/[îïíì]/.test(this.value)) {    // add ī when we add Extended Latin
+        this.value = iCombinations[this.value];
+    }
 }
 
 /**
